@@ -19,12 +19,14 @@ function PDX_AABB(model = undefined) constructor {
 		if(is_instanceof(model, BBMOD_Model)) {
 			var _meshcnt = array_length(model.Meshes);
 			if(_meshcnt > 0) {
-				if(!is_undefined(model.Meshes[0])) {
+		//		if(!is_undefined(model.Meshes[0])) {
+				if(is_instanceof(model.Meshes[0], BBMOD_Mesh) && !is_undefined(model.Meshes[0].BboxMin) && !is_undefined(model.Meshes[0].BboxMax)) {
 					Min = new BBMOD_Vec3(model.Meshes[0].BboxMin.X, model.Meshes[0].BboxMin.Y, model.Meshes[0].BboxMin.Z);
 					Max = new BBMOD_Vec3(model.Meshes[0].BboxMax.X, model.Meshes[0].BboxMax.Y, model.Meshes[0].BboxMax.Z);
 
 					for(var _m=1; _m<_meshcnt; _m++) {
-						if(!is_undefined(model.Meshes[_m])) {
+//						if(!is_undefined(model.Meshes[_m])) {
+						if(is_instanceof(model.Meshes[_m], BBMOD_Mesh) && !is_undefined(model.Meshes[_m]).BboxMin && !is_undefined(model.Meshes[_m]).BboxMax) {
 							Min.X = min(Min.X, model.Meshes[_m].BboxMin.X);
 							Min.Y = min(Min.Y, model.Meshes[_m].BboxMin.Y);
 							Min.Z = min(Min.Z, model.Meshes[_m].BboxMin.Z);
@@ -56,6 +58,7 @@ function PDX_BoundingBox(model = undefined) : PDX_AABB(model) constructor {
 	Translation = undefined;
 	AxisRotation = undefined;
 	Original = undefined;
+	Scale = 1;
 	
 	static RotBBox = function(Vec3, Pivot) {
 		var matx = new BBMOD_Matrix()
@@ -69,9 +72,13 @@ function PDX_BoundingBox(model = undefined) : PDX_AABB(model) constructor {
 
 	static Initialise = function(model) {
 		if(is_instanceof(model, BBMOD_Model)) {
-			AxisRotation = new BBMOD_Vec3(0);
-			Original = new PDX_AABB(model);
-			Translation = RotBBox(Pivot, new BBMOD_Vec3(0));
+			if(is_undefined(Min)) {
+				throw("Illegal model - no Bounding Box");
+			} else {
+				AxisRotation = new BBMOD_Vec3(0);
+				Original = new PDX_AABB(model);
+				Translation = RotBBox(Pivot, new BBMOD_Vec3(0));
+			}
 		}
 	}
 
@@ -104,10 +111,13 @@ function PDX_BoundingBox(model = undefined) : PDX_AABB(model) constructor {
 									0-(Min.Y + (Size.Y / 2)), 
 									0-(Min.Z + (Size.Z / 2)));
 			Translation = RotBBox(	Original.Pivot, new BBMOD_Vec3(0, 0, 0));
-			
 		}		
 			
 		return _res;
+	}
+	
+	static Normalize = function(unitscale) {
+		Scale = unitscale / max(Size.X, Size.Y, Size.Z);		
 	}
 
 	if(is_instanceof(model, BBMOD_Model)) {
@@ -116,7 +126,7 @@ function PDX_BoundingBox(model = undefined) : PDX_AABB(model) constructor {
 
 }
 
-function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0, roty = 0, rotz = 0, _sha1=undefined) : BBMOD_Model(_file, _sha1) constructor {
+function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0, roty = 0, rotz = 0, unitscale = 1, _sha1=undefined) : BBMOD_Model(_file, _sha1) constructor {
 	BBox = undefined;
 	Ground = undefined;
 	mscale = undefined;
@@ -125,15 +135,11 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 	xoff = 0;
 	yoff = 0;
 	zoff = 0;
-	Gimbal = undefined;
-	mxlat = undefined;
 	is_animated = animated;
 	animations = array_create(0);
 	animationPlayer = undefined;
 	animation_index = 0;
-	AxisRotate = undefined;
-	AxisBBox = undefined;
-	OBBox = undefined;
+	animation_index = 0;
 	
 	
 	if(!is_undefined(_file)) {
@@ -143,50 +149,11 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 		z = 0;
 		mscale = 1;
 		mname = __strip_ext(_file);
-		OBBox = new PDX_BoundingBox(self);
-		OBBox.Reorient(new BBMOD_Vec3(rotx, roty, rotz));
-		AxisRotate = new BBMOD_Vec3(rotx, roty, rotz);
-		AxisBBox =  new PDX_BoundingBox(self); // ReorientBBox();
-		AxisBBox.Reorient(new BBMOD_Vec3(rotx, roty, rotz)); 
-		BBox = { Min: AxisBBox.Min.Clone(), 
-				 Max: AxisBBox.Max.Clone(), 
-				 Size: AxisBBox.Size.Clone(), 
-				 Pivot: AxisBBox.Pivot.Clone()
-				 };
-		Gimbal = { Rotation : new BBMOD_Vec3(rotx, roty, rotz), Translation : new BBMOD_Vec3(0, 0, 0), Scale : 1 };
-/*
-		var _meshcnt = array_length(Meshes);
-		if(_meshcnt > 0) {
-			if(!is_undefined(Meshes[0])) {
-				BBox = { Min: new BBMOD_Vec3(Meshes[0].BboxMin.X, Meshes[0].BboxMin.Y, Meshes[0].BboxMin.Z), 
-						 Max: new BBMOD_Vec3(Meshes[0].BboxMax.X, Meshes[0].BboxMax.Y, Meshes[0].BboxMax.Z),
-						 Size: undefined,
-						 Pivot: undefined};
-
-				for(var _m=1; _m<_meshcnt; _m++) {
-					if(!is_undefined(Meshes[_m])) {
-						BBox.Min.X = min(BBox.Min.X, Meshes[_m].BboxMin.X);
-						BBox.Min.Y = min(BBox.Min.Y, Meshes[_m].BboxMin.Y);
-						BBox.Min.Z = min(BBox.Min.Z, Meshes[_m].BboxMin.Z);
-						BBox.Max.X = max(BBox.Max.X, Meshes[_m].BboxMax.X);
-						BBox.Max.Y = max(BBox.Max.Y, Meshes[_m].BboxMax.Y);
-						BBox.Max.Z = max(BBox.Max.Z, Meshes[_m].BboxMax.Z);
-					}
-				}
-			BBox.Size = new BBMOD_Vec3((BBox.Max.X - BBox.Min.X), 
-									   (BBox.Max.Y - BBox.Min.Y),
-									   (BBox.Max.Z - BBox.Min.Z));
-									   
-			BBox.Pivot = new BBMOD_Vec3(BBox.Min.X + (BBox.Size.X / 2), BBox.Min.Y + (BBox.Size.Y / 2), BBox.Min.Z + (BBox.Size.Z / 2));
-
-
-			}
-		}		
-*/
+		BBox = new PDX_BoundingBox(self);
+		BBox.Reorient(new BBMOD_Vec3(rotx, roty, rotz));
+		BBox.Normalize(unitscale);
 		if(!is_undefined(BBox)) {
-			Ground = min(BBox.Max.Z, BBox.Min.Z);
-			Gimbal.Scale = 1 / max(BBox.Size.X, BBox.Size.Y, BBox.Size.Z);
-			Gimbal.Translation = BBox.Pivot.Clone(); // Pivot;
+			Ground = min(BBox.Max.Z, BBox.Min.Z); // sbdbg - needs to account for axis + be adjustable
 			var matcnt = array_length(Materials);
 			if(matcnt > 1) {
 				show_debug_message(mname + " has " + string(matcnt) + " materials");
@@ -214,100 +181,10 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 		}
 	}
 	
-	static RotBBox = function(Vec3, Pivot) {
-		var matx = new BBMOD_Matrix()
-			.Translate(Pivot)
-			.RotateEuler(AxisRotate);
-show_debug_message("Vec3 : " + string(Vec3));
-show_debug_message("Pivot : " + string(Pivot));
-		var _tv = matrix_transform_vertex(matx.Raw, Vec3.X, Vec3.Y, Vec3.Z);
-		var _rbb = new BBMOD_Vec3(_tv[0], _tv[1], _tv[2]);
-show_debug_message("RBB : " + string(_rbb) + "\n");
-		
-		return _rbb;
-	}
-	
-	static ReorientBBox = function() {
-		var _meshcnt = array_length(Meshes);
-		var _lBBox = { Min: undefined, 
-					   Max: undefined,
-					   Size: undefined,
-					   Pivot: undefined,
-					   Translation: undefined
-					   };
-		var _res = undefined;
-		
-		if(_meshcnt > 0) {
-			if(!is_undefined(Meshes[0])) {
-				_lBBox.Min = new BBMOD_Vec3(Meshes[0].BboxMin.X, Meshes[0].BboxMin.Y, Meshes[0].BboxMin.Z);
-				_lBBox.Max = new BBMOD_Vec3(Meshes[0].BboxMax.X, Meshes[0].BboxMax.Y, Meshes[0].BboxMax.Z);
-
-				for(var _m=1; _m<_meshcnt; _m++) {
-					if(!is_undefined(Meshes[_m])) {
-						_lBBox.Min.X = min(_lBBox.Min.X, Meshes[_m].BboxMin.X);
-						_lBBox.Min.Y = min(_lBBox.Min.Y, Meshes[_m].BboxMin.Y);
-						_lBBox.Min.Z = min(_lBBox.Min.Z, Meshes[_m].BboxMin.Z);
-						_lBBox.Max.X = max(_lBBox.Max.X, Meshes[_m].BboxMax.X);
-						_lBBox.Max.Y = max(_lBBox.Max.Y, Meshes[_m].BboxMax.Y);
-						_lBBox.Max.Z = max(_lBBox.Max.Z, Meshes[_m].BboxMax.Z);
-					}
-				}
-			_lBBox.Size = new BBMOD_Vec3((_lBBox.Max.X - _lBBox.Min.X), 
-									     (_lBBox.Max.Y - _lBBox.Min.Y),
-									     (_lBBox.Max.Z - _lBBox.Min.Z));
-									   
-			_lBBox.Pivot = new BBMOD_Vec3(0-(_lBBox.Min.X + (_lBBox.Size.X / 2)), 
-										  0-(_lBBox.Min.Y + (_lBBox.Size.Y / 2)), 
-										  0-(_lBBox.Min.Z + (_lBBox.Size.Z / 2)));
-			var _nBBox = { Min: RotBBox(new BBMOD_Vec3(_lBBox.Min.X, _lBBox.Min.Y, _lBBox.Min.Z), _lBBox.Pivot),
-						   Max: RotBBox(new BBMOD_Vec3(_lBBox.Max.X, _lBBox.Max.Y, _lBBox.Max.Z), _lBBox.Pivot) }
-
-			var _sBBox = { Min: new BBMOD_Vec3(0, 0, 0), Max: new BBMOD_Vec3(0, 0, 0) };
-			
-			_sBBox.Min.X = min(_nBBox.Min.X, _nBBox.Max.X);
-			_sBBox.Min.Y = min(_nBBox.Min.Y, _nBBox.Max.Y);
-			_sBBox.Min.Z = min(_nBBox.Min.Z, _nBBox.Max.Z);
-			_sBBox.Max.X = max(_nBBox.Min.X, _nBBox.Max.X);
-			_sBBox.Max.Y = max(_nBBox.Min.Y, _nBBox.Max.Y);
-			_sBBox.Max.Z = max(_nBBox.Min.Z, _nBBox.Max.Z);
-			
-			_res = { Min: _sBBox.Min,
-					 Max: _sBBox.Max,
-					 Size: undefined,
-					 Pivot: undefined,
-					 Translation: undefined
-					}
-			_res.Size = new BBMOD_Vec3(_res.Max.X - _res.Min.X, 
-									   _res.Max.Y - _res.Min.Y,
-									   _res.Max.Z - _res.Min.Z);
-			_res.Pivot = new BBMOD_Vec3(0-(_res.Min.X + (_res.Size.X / 2)), 
-										0-(_res.Min.Y + (_res.Size.Y / 2)), 
-										0-(_res.Min.Z + (_res.Size.Z / 2)));
-			_res.Translation = RotBBox(_lBBox.Pivot, new BBMOD_Vec3(0, 0, 0));
-			
-			}
-		}		
-		return _res;
-	}
-
-	static ReOrient = function(Vec3) {
-		AxisRotate = Vec3.Clone();
-		AxisBBox = ReorientBBox();
-		BBox = { Min: AxisBBox.Min.Clone(), 
-				 Max: AxisBBox.Max.Clone(), 
-				 Size: AxisBBox.Size.Clone(), 
-				 Pivot: AxisBBox.Pivot.Clone()
-				 };
-		Gimbal = { Rotation : AxisRotate.Clone(),
-				   Scale: 1 / max(AxisBBox.Size.X, AxisBBox.Size.Y, AxisBBox.Size.Z),
-				   Translation: AxisBBox.Translation.Clone()
-			};
-	}
-	
 	static toscr = function(v) {
 		var matx = new BBMOD_Matrix()
 			.Translate(0,0,0)
-			.RotateEuler(Gimbal.Rotation)
+			.RotateEuler(BBox.AxisRotation)
 			.Scale(mscale)
 			;
 
@@ -404,19 +281,13 @@ show_debug_message("RBB : " + string(_rbb) + "\n");
 	static draw = function(_scr_x = 0, _scr_y = 0, _scr_z = 0, xrot = 0, yrot = 0, zrot = 0 ) {
 //		var _t = __fit_size();
 		// var _magic = 256; //  make_reference_plane(1 / max(BBox.Size.X, BBox.Size.Y));
-		var _rscale = 512; // _magic.scale;
+		var _rscale = global.size * BBox.Scale; // _magic.scale;
 		new BBMOD_Matrix()
-			.RotateEuler(AxisRotate)
-//			.Translate(_scr_x, _scr_y, _scr_z)
-			.Translate(AxisBBox.Translation)
-			.Scale(Gimbal.Scale, Gimbal.Scale, Gimbal.Scale)
+			.RotateEuler(BBox.AxisRotation)
+			.Translate(BBox.Translation)
 			.Scale(_rscale, _rscale, _rscale)
-//			.Translate(x + xoff, y + yoff, z + zoff)
-			/*
-			.RotateX(wrap(xrot, 360))
-			.RotateY(wrap(yrot, 360))
-			.RotateZ(wrap(zrot, 360))
-			*/
+//			.RotateZ(global.rot)
+			
 			.ApplyWorld();
 		if(is_animated && !is_undefined(animationPlayer)) {
 			animationPlayer.render();
@@ -441,7 +312,6 @@ show_debug_message("RBB : " + string(_rbb) + "\n");
 		_clone.xrot = xrot;
 		_clone.yrot = yrot;
 		_clone.zrot = zrot;
-		_clone.AxisRotate = AxisRotate.Clone();
 
 		var _ac = array_length(animations)
 		_clone.animations = array_create(_ac);

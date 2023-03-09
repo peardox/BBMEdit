@@ -3,8 +3,11 @@
 
 if(keyboard_check_pressed(vk_space)) {
 	rn = wrap(++rn, 64);
-//	model.Gimbal.Rotation = setRotationBase(rn);
-	model.ReOrient(setRotationBase(rn));
+	model.BBox.Reorient(setRotationBase(rn));
+}
+if(keyboard_check_pressed(vk_f5)) {
+	rn = 0;
+	model.BBox.Reorient(setRotationBase(rn));
 }
 var _rb = setRotationBase(rn);
 
@@ -13,13 +16,13 @@ model.drawAxes();
 draw_set_color(c_white);
 
 if(global.use_peardox) {
-	draw_text(8,  0, "Original = " + string(model.OBBox.Original));	
-	draw_text(8, 16, "OBBox    = { Pivot : " + string(model.OBBox.Pivot) + 
-					 ", Min : " + string(model.OBBox.Min) +
-					 ", Max : " + string(model.OBBox.Max) +
-					 ", Size : " + string(model.OBBox.Size) +
-					 ", AxisRotation : " + string(model.OBBox.AxisRotation) +
-					 ", Translation : " + string(model.OBBox.Translation) +
+	draw_text(8,  0, "Original = " + string(model.BBox.Original));	
+	draw_text(8, 16, "BBox    = { Pivot : " + string(model.BBox.Pivot) + 
+					 ", Min : " + string(model.BBox.Min) +
+					 ", Max : " + string(model.BBox.Max) +
+					 ", Size : " + string(model.BBox.Size) +
+					 ", AxisRotation : " + string(model.BBox.AxisRotation) +
+					 ", Translation : " + string(model.BBox.Translation) +
 					 " }");	
 	draw_text(8, 32, "RotBase = " + string(_rb) + " (" + string(rn) + ")");	
 	
@@ -29,7 +32,7 @@ draw_text(8, 48, "Frame = " + string(global.frame) +
 				 ", Real = " + string(global.rfps) +
 				 ", Rot = " + string(global.rot));	
 				 
-draw_text(8, 64, "AxisBBox = " + string(model.AxisBBox));
+//draw_text(8, 64, "AxisBBox = " + string(model.AxisBBox));
 
 draw_text(8, 96, "Cam Pos : " + string(oCamera.camera.Position) +
 				 ", Cam Tgt : " + string(oCamera.camera.Target) + 

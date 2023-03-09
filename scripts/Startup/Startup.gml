@@ -12,6 +12,7 @@ global.dorot = true;
 global.rotctr = 0;
 global.rotstep = 1;
 global.rotctr = 0;
+global.size = 512;
 global.rot = 0;
 
 global.camera_distance = 0;

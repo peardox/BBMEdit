@@ -7,7 +7,7 @@ if(global.camera_ortho) {
 	camera.Orthographic = true;
 
 	camera.Target = new BBMOD_Vec3(0, 0, 0);
-	camera.Position = new BBMOD_Vec3(0, -1000, 0);
+	camera.Position = new BBMOD_Vec3(1000, 0, 0);
 	camera.Width = window_get_width();
 	camera.Height = window_get_height();
 
@@ -17,7 +17,7 @@ if(global.camera_ortho) {
 } else {	
 	camera.Orthographic = false;
 	camera.Target = new BBMOD_Vec3(0, 0, 0);
-	camera.Position = new BBMOD_Vec3(0, -1000, 0);
+	camera.Position = new BBMOD_Vec3(1000, 0, 1000);
 
 	camera.DirectionUp = global.camup;
 	camera.ZNear = 0.1;

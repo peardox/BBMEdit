@@ -5,11 +5,12 @@ rn = 0;
 if(global.use_peardox) {
 //	model = new PDX_Model("cat/Cat_Chubby.bbmod", true, false, 180, 270, 90);
 //	animIdx = 5;
-//	model = new PDX_Model("Pterodactyl/Pterodactyl.bbmod", true, false, 270, 270, 0);
-//	animIdx = 0;
+	model = new PDX_Model("Boy/Boy.bbmod", true, false);
+	animIdx = 0;
 //	model.Gimbal.Rotation.Y = 180;
 //	model = new PDX_Model("cube/hexa123-in-air.bbmod", false, false, 0, 0, 0);
-	model = new PDX_Model("cube/hexa123-in-air.bbmod", false, false, 270, 270, 0);
+//	model = new PDX_Model("cube/hexa123-in-air.bbmod", false, false, 270, 270, 0);
+//	model = new PDX_Model("cube/castle.bbmod", false, false, 0, 0, 0);
 //	model = new PDX_Model("cube/hexa123-ground.bbmod", false, false, 270, 270, 0);
 //	model = new PDX_Model("cube/hexa123.bbmod", false, false, 270, 180, 0);
 //	model = new PDX_Model("cube/cube-z-x-view.bbmod", false, false, 270, 180, 0);
