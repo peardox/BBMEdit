@@ -12,6 +12,7 @@ if(keyboard_check_pressed(vk_f5)) {
 var _rb = setRotationBase(rn);
 
 model.drawAxes();
+model.DrawBoundingBox();
 
 draw_set_color(c_white);
 

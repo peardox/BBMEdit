@@ -7,54 +7,69 @@ global.resources = {
     Missing: [],
     Models: [],
     Tiles: [],
+	Sprites: []
 };
 
-function PDX_AABB(model = undefined) constructor {
+function PDX_AABB(model = undefined, extbbox = undefined) constructor {
 	Min = undefined;
 	Max = undefined;
 	Size = undefined;
 	Pivot = undefined;
 
-	static Reset = function(model) {
+	static Reset = function(model, extbbox = undefined) {
 		if(is_instanceof(model, BBMOD_Model)) {
 			var _meshcnt = array_length(model.Meshes);
 			if(_meshcnt > 0) {
-		//		if(!is_undefined(model.Meshes[0])) {
-				if(is_instanceof(model.Meshes[0], BBMOD_Mesh) && !is_undefined(model.Meshes[0].BboxMin) && !is_undefined(model.Meshes[0].BboxMax)) {
-					Min = new BBMOD_Vec3(model.Meshes[0].BboxMin.X, model.Meshes[0].BboxMin.Y, model.Meshes[0].BboxMin.Z);
-					Max = new BBMOD_Vec3(model.Meshes[0].BboxMax.X, model.Meshes[0].BboxMax.Y, model.Meshes[0].BboxMax.Z);
+				if(is_instanceof(model.Meshes[0], BBMOD_Mesh) && 
+					!is_undefined(model.Meshes[0].BboxMin) && 
+					!is_undefined(model.Meshes[0].BboxMax)) {
+						Min = new BBMOD_Vec3(model.Meshes[0].BboxMin.X, model.Meshes[0].BboxMin.Y, model.Meshes[0].BboxMin.Z);
+						Max = new BBMOD_Vec3(model.Meshes[0].BboxMax.X, model.Meshes[0].BboxMax.Y, model.Meshes[0].BboxMax.Z);
 
-					for(var _m=1; _m<_meshcnt; _m++) {
-//						if(!is_undefined(model.Meshes[_m])) {
-						if(is_instanceof(model.Meshes[_m], BBMOD_Mesh) && !is_undefined(model.Meshes[_m]).BboxMin && !is_undefined(model.Meshes[_m]).BboxMax) {
-							Min.X = min(Min.X, model.Meshes[_m].BboxMin.X);
-							Min.Y = min(Min.Y, model.Meshes[_m].BboxMin.Y);
-							Min.Z = min(Min.Z, model.Meshes[_m].BboxMin.Z);
-							Max.X = max(Max.X, model.Meshes[_m].BboxMax.X);
-							Max.Y = max(Max.Y, model.Meshes[_m].BboxMax.Y);
-							Max.Z = max(Max.Z, model.Meshes[_m].BboxMax.Z);
+						for(var _m=1; _m<_meshcnt; _m++) {
+							if(is_instanceof(model.Meshes[_m], BBMOD_Mesh) && 
+								!is_undefined(model.Meshes[_m].BboxMin) && 
+								!is_undefined(model.Meshes[_m].BboxMax)) {
+									Min.X = min(Min.X, model.Meshes[_m].BboxMin.X);
+									Min.Y = min(Min.Y, model.Meshes[_m].BboxMin.Y);
+									Min.Z = min(Min.Z, model.Meshes[_m].BboxMin.Z);
+									Max.X = max(Max.X, model.Meshes[_m].BboxMax.X);
+									Max.Y = max(Max.Y, model.Meshes[_m].BboxMax.Y);
+									Max.Z = max(Max.Z, model.Meshes[_m].BboxMax.Z);
+							}
+						}
+
+					} else {
+						if(is_struct(extbbox)) {
+							if(variable_struct_exists(extbbox, "Size")) {
+								Min = new BBMOD_Vec3(0, 0, 0);
+								Max = new BBMOD_Vec3(extbbox.Size.X, extbbox.Size.Y, extbbox.Size.Z);
+							} else {
+								throw("Malformed External Bounding Box");
+							}
+						} else {
+							throw("No Bounding Box");
 						}
 					}
-				Size = new BBMOD_Vec3(	Max.X - Min.X, 
-										Max.Y - Min.Y,
-										Max.Z - Min.Z);
+			Size = new BBMOD_Vec3(	Max.X - Min.X, 
+									Max.Y - Min.Y,
+									Max.Z - Min.Z);
 									   
-				Pivot = new BBMOD_Vec3(	0-(Min.X + (Size.X / 2)), 
-										0-(Min.Y + (Size.Y / 2)), 
-										0-(Min.Z + (Size.Z / 2)));
+			Pivot = new BBMOD_Vec3(	0-(Min.X + (Size.X / 2)), 
+									0-(Min.Y + (Size.Y / 2)), 
+									0-(Min.Z + (Size.Z / 2)));
 		
-				}
-			}
+			}			
 		}
 	}	
 
 	if(is_instanceof(model, BBMOD_Model)) {
-		Reset(model);
+		Reset(model, extbbox);
 	}
 
 }
 
-function PDX_BoundingBox(model = undefined) : PDX_AABB(model) constructor {
+function PDX_BoundingBox(model = undefined, extbbox = undefined) : PDX_AABB(model, extbbox) constructor {
 	Translation = undefined;
 	AxisRotation = undefined;
 	Original = undefined;
@@ -126,7 +141,7 @@ function PDX_BoundingBox(model = undefined) : PDX_AABB(model) constructor {
 
 }
 
-function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0, roty = 0, rotz = 0, unitscale = 1, _sha1=undefined) : BBMOD_Model(_file, _sha1) constructor {
+function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0, roty = 0, rotz = 0, unitscale = 1, extbbox = undefined, _sha1=undefined) : BBMOD_Model(_file, _sha1) constructor {
 	BBox = undefined;
 	Ground = undefined;
 	mscale = undefined;
@@ -147,9 +162,9 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 		x = 0;
 		y = 0; 
 		z = 0;
-		mscale = 1;
+		mscale = global.size; // sbdbg - Placeholder
 		mname = __strip_ext(_file);
-		BBox = new PDX_BoundingBox(self);
+		BBox = new PDX_BoundingBox(self, extbbox);
 		BBox.Reorient(new BBMOD_Vec3(rotx, roty, rotz));
 		BBox.Normalize(unitscale);
 		if(!is_undefined(BBox)) {
@@ -163,7 +178,7 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 				if(_path == "") {
 					var texfile = MaterialNames[m];
 				} else {
-					var texfile = _path + "/" + MaterialNames[m];
+					var texfile = _path + MaterialNames[m];
 				}
 				var matidx = _get_materials(texfile, trepeat, animated);
 		
@@ -182,9 +197,11 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 	}
 	
 	static toscr = function(v) {
+
+/*
 		var matx = new BBMOD_Matrix()
 			.Translate(0,0,0)
-			.RotateEuler(BBox.AxisRotation)
+//			.RotateEuler(BBox.AxisRotation)
 			.Scale(mscale)
 			;
 
@@ -192,6 +209,8 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 		var vv = new BBMOD_Vec3(tp[0], tp[1], tp[2]);
 		var scr =  oCamera.camera.world_to_screen(vv);
 		return scr;
+*/
+		return oCamera.camera.world_to_screen(v);
 	}
 	
 	static __get_slice_z = function(_z, _scale = 1) { // e.g. _z = model.BBox.Min.Z
@@ -201,11 +220,9 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 		_p[2] = new BBMOD_Vec3((BBox.Max.X + xoff) * _scale, (BBox.Min.Y + yoff) * _scale, (_z + zoff) * _scale);
 		_p[3] = new BBMOD_Vec3((BBox.Max.X + xoff) * _scale, (BBox.Max.Y + yoff) * _scale, (_z + zoff) * _scale);
 
-		var _rots = new BBMOD_Vec3(Gimbal.Rotation);
-
 		var _s = array_create(4);
 		for(var _i = 0; _i < 4; _i++) {
-			_s[_i] = toscr(_p[_i], mscale, undefined, 1, _rots);
+			_s[_i] = toscr(_p[_i]);
 		}
 	
 		return _s;
@@ -250,7 +267,7 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 	static DrawBoundingBox =  function(_colour = c_red) {
 		draw_set_color(_colour);
 		
-		var _size = 1; //__fit_size();
+		var _size = 1;
 	
 		var _minz = __get_slice_z(BBox.Min.Z, _size);
 		var _maxz = __get_slice_z(BBox.Max.Z, _size);
@@ -278,17 +295,21 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 		
 	}
 
-	static draw = function(_scr_x = 0, _scr_y = 0, _scr_z = 0, xrot = 0, yrot = 0, zrot = 0 ) {
+	static Orientate = function() {
 //		var _t = __fit_size();
-		// var _magic = 256; //  make_reference_plane(1 / max(BBox.Size.X, BBox.Size.Y));
-		var _rscale = global.size * BBox.Scale; // _magic.scale;
-		new BBMOD_Matrix()
+		// var _magic = 256; //  make_reference_plane(1 / max(BBox.Size.X, BBox.Size.Y));		var _rscale = mscale * BBox.Scale; // _magic.scale;
+		var _tScale = mscale * BBox.Scale;
+		return new BBMOD_Matrix()
 			.RotateEuler(BBox.AxisRotation)
 			.Translate(BBox.Translation)
-			.Scale(_rscale, _rscale, _rscale)
-//			.RotateZ(global.rot)
-			
-			.ApplyWorld();
+			.Scale(_tScale, _tScale, _tScale);
+		
+	}
+	
+	static draw = function(_scr_x = 0, _scr_y = 0, _scr_z = 0, xrot = 0, yrot = 0, zrot = 0 ) {
+
+		Orientate().ApplyWorld();
+		
 		if(is_animated && !is_undefined(animationPlayer)) {
 			animationPlayer.render();
 		} else {
@@ -399,8 +420,13 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 					return i;
 				}
 			}
-			var sprtex = sprite_add(matimg, 0, false, true, 0, 0);
-			sprite_prefetch(sprtex);
+//			var sprtex = new BBMOD_Sprite(matimg);
+			
+//			var sprtex = sprite_add(matimg, 0, false, true, 0, 0);
+			var _sprcnt = array_length(global.resources.Sprites);
+			global.resources.Sprites[_sprcnt] = sprite_add(matimg, 0, false, true, 0, 0);
+//			global.resources.Sprites[_sprcnt] = make_sprite(matimg);
+//			sprite_prefetch(sprtex);
 			if(animated) {
 				global.resources.Materials[matcnt] = BBMOD_MATERIAL_DEFAULT_ANIMATED.clone();
 			} else {
@@ -408,7 +434,14 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 			}
 			global.resources.Materials[matcnt].set_shader(BBMOD_ERenderPass.DepthOnly, BBMOD_SHADER_DEFAULT_DEPTH);
 			global.resources.Materials[matcnt].matname = matimg;
-			global.resources.Materials[matcnt].BaseOpacity = sprite_get_texture(sprtex, 0);
+			global.resources.Materials[matcnt].Path = matimg;
+			
+			var _mattex = sprite_get_texture(global.resources.Sprites[_sprcnt], 0);
+
+			global.resources.Materials[matcnt].BaseOpacity = _mattex;
+//			global.resources.Materials[matcnt].BaseOpacity = sprtex.get_texture();
+			show_debug_message("Loaded material : " + matimg + " in " + mname);
+
 			global.resources.Materials[matcnt].Repeat = trepeat;
 			return matcnt;
 		} else {

@@ -11,6 +11,22 @@ function wrap(v, max) {
 	return v;
 }
 
+function make_sprite(sfile) {
+	var _image = sprite_add(sfile, 0, false, true, 0, 0);
+	var _required_width = sprite_get_width(_image);
+	var _required_height = sprite_get_height(_image);
+
+	show_debug_message("Image = " + sfile + " - " + string(_required_width) + " x " + string(_required_height));
+	var _surf = surface_create(_required_width, _required_height);
+	surface_set_target(_surf);
+	draw_clear_alpha(c_black, 0);
+	draw_sprite(_image, 0, 0, 0);
+	surface_reset_target();
+	sprite_delete(_image);
+			
+	return sprite_create_from_surface(_surf, 0, 0, _required_width, _required_height, false, false, 0, 0);
+}	
+
 function set_screen(fnt = undefined, font_size = 24) {
 	var design_width = 1280;
 	var design_height = 800;
