@@ -107,6 +107,7 @@
     {"name":"__bbmod_path","order":4,"path":"scripts/__bbmod_path/__bbmod_path.yy",},
     {"name":"BBMOD_ShDefaultUnlitBatched","order":11,"path":"shaders/BBMOD_ShDefaultUnlitBatched/BBMOD_ShDefaultUnlitBatched.yy",},
     {"name":"BBMOD_MixVec2FromHealthModule","order":3,"path":"scripts/BBMOD_MixVec2FromHealthModule/BBMOD_MixVec2FromHealthModule.yy",},
+    {"name":"PDX_Text","order":3,"path":"scripts/PDX_Text/PDX_Text.yy",},
     {"name":"__bbmod_async","order":1,"path":"scripts/__bbmod_async/__bbmod_async.yy",},
     {"name":"BBMOD_ShPostProcess","order":2,"path":"shaders/BBMOD_ShPostProcess/BBMOD_ShPostProcess.yy",},
     {"name":"BBMOD_BaseRenderer","order":4,"path":"scripts/BBMOD_BaseRenderer/BBMOD_BaseRenderer.yy",},

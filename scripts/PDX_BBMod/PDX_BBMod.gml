@@ -63,6 +63,10 @@ function PDX_AABB(model = undefined, extbbox = undefined) constructor {
 		}
 	}	
 
+	var _a = debug_get_callstack(4);
+	show_debug_message("In PXD_AABB - model = " + /* string(model) + */
+			". extbbox = " + string(extbbox) +
+			", Stack ...`n" + string(_a));
 	if(is_instanceof(model, BBMOD_Model)) {
 		Reset(model, extbbox);
 	}
@@ -85,13 +89,13 @@ function PDX_BoundingBox(model = undefined, extbbox = undefined) : PDX_AABB(mode
 		return _rbb;
 	}
 
-	static Initialise = function(model) {
+	static Initialise = function(model, extbbox) {
 		if(is_instanceof(model, BBMOD_Model)) {
 			if(is_undefined(Min)) {
 				throw("Illegal model - no Bounding Box");
 			} else {
 				AxisRotation = new BBMOD_Vec3(0);
-				Original = new PDX_AABB(model);
+				Original = new PDX_AABB(model, extbbox);
 				Translation = RotBBox(Pivot, new BBMOD_Vec3(0));
 			}
 		}
@@ -136,7 +140,7 @@ function PDX_BoundingBox(model = undefined, extbbox = undefined) : PDX_AABB(mode
 	}
 
 	if(is_instanceof(model, BBMOD_Model)) {
-		Initialise(model);
+		Initialise(model, extbbox);
 	}
 
 }
@@ -267,7 +271,7 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 	static DrawBoundingBox =  function(_colour = c_red) {
 		draw_set_color(_colour);
 		
-		var _size = 1;
+		var _size = mscale * BBox.Scale; // 1;
 	
 		var _minz = __get_slice_z(BBox.Min.Z, _size);
 		var _maxz = __get_slice_z(BBox.Max.Z, _size);
@@ -301,7 +305,8 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 		var _tScale = mscale * BBox.Scale;
 		return new BBMOD_Matrix()
 			.RotateEuler(BBox.AxisRotation)
-			.Translate(BBox.Translation)
+//			.Translate(BBox.Translation.X, 0 /* - BBox.Translation.Y */, BBox.Translation.Z)
+			.Translate(0, 0, BBox.Translation.Z)
 			.Scale(_tScale, _tScale, _tScale);
 		
 	}
@@ -411,6 +416,8 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 			matimg = matfile + ".png";
 		} else if(file_exists(matfile + ".jpg")) {
 			matimg = matfile + ".jpg";
+		} else {
+			matimg = matfile;
 		}
 	
 		if(is_string(matimg)) {
@@ -421,29 +428,32 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 				}
 			}
 //			var sprtex = new BBMOD_Sprite(matimg);
-			
 //			var sprtex = sprite_add(matimg, 0, false, true, 0, 0);
 			var _sprcnt = array_length(global.resources.Sprites);
 			global.resources.Sprites[_sprcnt] = sprite_add(matimg, 0, false, true, 0, 0);
 //			global.resources.Sprites[_sprcnt] = make_sprite(matimg);
 //			sprite_prefetch(sprtex);
 			if(animated) {
-				global.resources.Materials[matcnt] = BBMOD_MATERIAL_DEFAULT_ANIMATED.clone();
+//				global.resources.Materials[matcnt] = BBMOD_MATERIAL_DEFAULT_ANIMATED.clone();
+				global.resources.Materials[matcnt] = BBMOD_MATERIAL_DEFAULT.clone();
+//				BBMOD_MATERIAL_DEFAULT.clone();
 			} else {
 				global.resources.Materials[matcnt] = BBMOD_MATERIAL_DEFAULT.clone();
 			}
 			global.resources.Materials[matcnt].set_shader(BBMOD_ERenderPass.DepthOnly, BBMOD_SHADER_DEFAULT_DEPTH);
 			global.resources.Materials[matcnt].matname = matimg;
 			global.resources.Materials[matcnt].Path = matimg;
-			
-			var _mattex = sprite_get_texture(global.resources.Sprites[_sprcnt], 0);
+			if(sprite_exists(global.resources.Sprites[_sprcnt])) {
+				var _mattex = sprite_get_texture(global.resources.Sprites[_sprcnt], 0);
 
-			global.resources.Materials[matcnt].BaseOpacity = _mattex;
-//			global.resources.Materials[matcnt].BaseOpacity = sprtex.get_texture();
-			show_debug_message("Loaded material : " + matimg + " in " + mname);
+				global.resources.Materials[matcnt].BaseOpacity = _mattex;
+				show_debug_message("Loaded material : " + matimg + " in " + mname);
 
-			global.resources.Materials[matcnt].Repeat = trepeat;
-			return matcnt;
+				global.resources.Materials[matcnt].Repeat = trepeat;
+				return matcnt;
+			} else {
+				throw("Sprite missing " +  matimg);
+			}
 		} else {
 			var already_missed = false;
 			var miscnt = array_length(global.resources.Missing);
@@ -461,3 +471,10 @@ function PDX_Model(_file=undefined, animated = false, trepeat = false, rotx = 0,
 	}
 
 }
+/*
+	global.resources.Sprites[0] = skin;	
+	global.resources.Materials[0] = BBMOD_MATERIAL_DEFAULT_ANIMATED.clone();
+	global.resources.Materials[0].matname = "Character/skin";
+	global.resources.Materials[0].set_shader(BBMOD_ERenderPass.DepthOnly, BBMOD_SHADER_DEFAULT_DEPTH);
+	global.resources.Materials[0].BaseOpacity = sprite_get_texture(skin, 0);
+*/

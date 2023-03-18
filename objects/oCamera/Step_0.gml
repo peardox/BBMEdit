@@ -16,7 +16,7 @@ if(keyboard_check_pressed(vk_f3)) {
 		camera.ZFar = 32768;
 	} else {	
 		camera.Target = new BBMOD_Vec3(0, 0, 0);
-		camera.Position = new BBMOD_Vec3(1000, 0, 1000);
+		camera.Position = new BBMOD_Vec3(1000, 0, -1000);
 
 		camera.DirectionUp = global.camup;
 		camera.ZNear = 0.1;
@@ -40,7 +40,7 @@ camera.update(delta_time);
 camera.apply(); 
 
 
-renderer.update(delta_time);
+
 
 
 if((global.frame % 60) == 15) {

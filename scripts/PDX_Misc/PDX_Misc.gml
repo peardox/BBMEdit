@@ -1,5 +1,21 @@
 // Script assets have changed for v2.3.0 see
 // https://help.yoyogames.com/hc/en-us/articles/360005277377 for more information
+
+function get_sprite_assets() {
+    var surf,no,i,ds_map;
+    ds_map = argument0;
+    surf = surface_create(1,1);
+    no = sprite_create_from_surface(surf,0,0,1,1,false,false,0,0);
+    surface_free(surf);
+    sprite_delete(no);
+    for (i=0; i<no; i+=1) {
+        if (sprite_exists(i)) {
+            ds_map_add(ds_map,sprite_get_name(i),i);
+        }
+    }
+    return 0;
+}
+
 function wrap(v, max) {
 	while(v > max) {
 		v -= max;
@@ -91,7 +107,7 @@ function set_screen(fnt = undefined, font_size = 24) {
 		game_width: game_width,
 		game_height: game_height,
 		game_scale: game_scale,
-		game_line_height: _line_height,
+		line_height: _line_height,
 		font_size: font_size
 	}
 	
